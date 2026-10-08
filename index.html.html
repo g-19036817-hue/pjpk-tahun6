@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game PJ & Pendidikan Kesihatan Tahun 6</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#eaf4ff,#f7fbff);color:#172033}
+.container{max-width:760px;margin:auto;padding:20px}
+.header,.card{background:white;border-radius:22px;padding:24px;box-shadow:0 8px 30px rgba(30,60,100,.12)}
+.header{text-align:center;margin-bottom:18px}
+.badge{display:inline-block;background:#e8f1ff;padding:8px 14px;border-radius:999px;font-weight:bold}
+h1{margin:12px 0 5px;font-size:30px}
+.subtitle{color:#5d6b82}
+.top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:15px}
+.score,.counter{padding:10px 14px;border-radius:12px;font-weight:bold;background:#eef5ff}
+.progress{height:10px;background:#e6eaf0;border-radius:20px;overflow:hidden;margin-bottom:22px}
+.progress-bar{height:100%;width:0;background:#246bce;transition:.3s}
+.topic{font-size:14px;color:#246bce;font-weight:bold;text-transform:uppercase}
+.question{font-size:22px;line-height:1.4;margin:10px 0 18px}
+.option{display:block;width:100%;border:2px solid #e2e7ef;background:#fff;padding:14px;margin:10px 0;border-radius:14px;text-align:left;font-size:16px;cursor:pointer}
+.option:hover{border-color:#246bce;background:#f5f9ff}
+.option.correct{border-color:#1f9d55;background:#eaf8ef}
+.option.wrong{border-color:#d64545;background:#fff0f0}
+.option:disabled{cursor:default}
+.feedback{min-height:45px;padding:12px 0;font-weight:bold;line-height:1.45}
+button.action{border:0;border-radius:14px;padding:13px 20px;font-weight:bold;font-size:16px;cursor:pointer;background:#246bce;color:white}
+button.action:hover{filter:brightness(.94)}
+.hidden{display:none}
+.result{text-align:center}
+.result .big{font-size:48px}
+.review{margin-top:20px;text-align:left}
+.review-item{padding:12px;border-bottom:1px solid #e5e7eb}
+@media(max-width:520px){h1{font-size:24px}.question{font-size:19px}.container{padding:12px}.header,.card{padding:18px}}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="badge">🎮 PJ & PENDIDIKAN KESIHATAN</div>
+    <h1>Cabaran Juara Sihat Tahun 6</h1>
+    <div class="subtitle">30 soalan interaktif • Pilih jawapan yang paling tepat</div>
+  </div>
+
+  <div id="game" class="card">
+    <div class="top">
+      <div class="counter" id="counter">Soalan 1 / 30</div>
+      <div class="score" id="score">Skor: 0</div>
+    </div>
+    <div class="progress"><div class="progress-bar" id="bar"></div></div>
+    <div class="topic" id="topic"></div>
+    <div class="question" id="question"></div>
+    <div id="options"></div>
+    <div class="feedback" id="feedback"></div>
+    <button class="action hidden" id="next">Soalan Seterusnya ➜</button>
+  </div>
+
+  <div id="result" class="card result hidden"></div>
+</div>
+
+<script>
+const questions=[
+{t:"Pendidikan Jasmani",q:"Apakah tujuan utama melakukan pemanasan badan sebelum bersukan?",o:["Menyebabkan badan cepat letih","Menyediakan otot dan badan untuk aktiviti","Mengurangkan keperluan minum air","Meningkatkan rasa mengantuk"],a:1,e:"Pemanasan badan membantu menyediakan otot, sendi dan sistem badan sebelum aktiviti fizikal."},
+{t:"Pendidikan Jasmani",q:"Aktiviti manakah paling sesuai untuk meningkatkan daya tahan kardiovaskular?",o:["Berjoging","Duduk membaca","Tidur","Berdiri diam"],a:0,e:"Berjoging ialah aktiviti yang menggunakan sistem kardiovaskular secara berterusan."},
+{t:"Pendidikan Jasmani",q:"Apakah maksud daya tahan otot?",o:["Keupayaan otot melakukan kerja berulang dalam tempoh tertentu","Keupayaan tidur lama","Keupayaan berlari paling laju","Keupayaan mengangkat objek sekali sahaja"],a:0,e:"Daya tahan otot ialah keupayaan otot melakukan aktiviti berulang atau mengekalkan kerja."},
+{t:"Pendidikan Jasmani",q:"Aktiviti manakah membantu meningkatkan fleksibiliti?",o:["Regangan","Menonton televisyen","Duduk terlalu lama","Tidur sepanjang hari"],a:0,e:"Regangan membantu meningkatkan kelenturan atau fleksibiliti badan."},
+{t:"Pendidikan Jasmani",q:"Apakah yang perlu dilakukan selepas aktiviti fizikal yang lasak?",o:["Terus berlari tanpa berhenti","Melakukan penyejukan badan","Terus tidur","Tidak minum air"],a:1,e:"Penyejukan badan membantu badan kembali secara beransur-ansur kepada keadaan rehat."},
+{t:"Pendidikan Jasmani",q:"Apakah tindakan paling selamat jika peralatan sukan rosak?",o:["Gunakan juga","Baiki sendiri tanpa kebenaran","Laporkan kepada guru","Simpan tanpa memberitahu sesiapa"],a:2,e:"Peralatan rosak boleh menyebabkan kecederaan dan perlu dilaporkan kepada guru."},
+{t:"Pendidikan Jasmani",q:"Apakah kepentingan mematuhi peraturan permainan?",o:["Menjadikan permainan lebih selamat dan teratur","Supaya permainan menjadi lebih lama","Supaya boleh menang sahaja","Supaya lawan berasa takut"],a:0,e:"Peraturan membantu memastikan permainan adil, teratur dan selamat."},
+{t:"Pendidikan Jasmani",q:"Apakah contoh aktiviti yang meningkatkan kekuatan otot?",o:["Tekan tubi","Membaca buku","Menonton video","Tidur"],a:0,e:"Tekan tubi menggunakan dan menguatkan beberapa kumpulan otot."},
+{t:"Pendidikan Jasmani",q:"Mengapakah air penting semasa melakukan aktiviti fizikal?",o:["Mengelakkan dehidrasi","Menjadikan badan mengantuk","Menggantikan makanan sepenuhnya","Mengurangkan pergerakan"],a:0,e:"Air membantu menggantikan cecair yang hilang melalui peluh."},
+{t:"Pendidikan Jasmani",q:"Apakah tindakan yang wajar jika berasa pening semasa bersukan?",o:["Teruskan bermain","Berhenti, berehat dan maklumkan kepada guru","Berlari lebih laju","Sembunyikan keadaan"],a:1,e:"Keselamatan perlu diutamakan. Berhenti dan maklumkan kepada guru."},
+{t:"Pendidikan Kesihatan",q:"Antara berikut, yang manakah contoh makanan seimbang?",o:["Nasi sahaja","Nasi, ikan, sayur dan buah","Gula-gula sahaja","Minuman manis sahaja"],a:1,e:"Makanan seimbang mengandungi pelbagai kumpulan makanan dalam kuantiti yang sesuai."},
+{t:"Pendidikan Kesihatan",q:"Apakah kepentingan sarapan?",o:["Memberi tenaga untuk memulakan aktiviti harian","Menyebabkan cepat mengantuk","Menggantikan semua waktu makan","Mengurangkan keperluan air"],a:0,e:"Sarapan membantu membekalkan tenaga dan nutrien untuk memulakan hari."},
+{t:"Pendidikan Kesihatan",q:"Apakah amalan kebersihan diri yang betul?",o:["Tidak mencuci tangan","Mandi dan memberus gigi secara teratur","Berkongsi berus gigi","Memakai pakaian kotor berulang kali"],a:1,e:"Menjaga kebersihan diri membantu mencegah penyakit dan mengekalkan kesihatan."},
+{t:"Pendidikan Kesihatan",q:"Bilakah kita perlu mencuci tangan?",o:["Sebelum makan dan selepas menggunakan tandas","Hanya apabila tangan kelihatan kotor","Sekali seminggu","Selepas tidur sahaja"],a:0,e:"Mencuci tangan pada waktu yang sesuai membantu mengurangkan penyebaran kuman."},
+{t:"Pendidikan Kesihatan",q:"Apakah kesan pengambilan makanan tinggi gula secara berlebihan?",o:["Sentiasa menjadikan badan lebih sihat","Boleh meningkatkan risiko masalah kesihatan","Menjadikan gigi lebih kuat","Menggantikan semua nutrien"],a:1,e:"Pengambilan gula berlebihan boleh meningkatkan risiko masalah seperti kerosakan gigi dan berat badan berlebihan."},
+{t:"Pendidikan Kesihatan",q:"Apakah amalan yang baik untuk menjaga kesihatan mental?",o:["Memendam semua masalah","Mendapatkan sokongan dan berkongsi dengan orang dipercayai","Mengasingkan diri daripada semua orang","Tidak berehat"],a:1,e:"Berbincang dengan orang yang dipercayai dan mendapatkan sokongan ialah amalan yang baik."},
+{t:"Pendidikan Kesihatan",q:"Apakah maksud tekanan atau stres?",o:["Tindak balas badan dan fikiran terhadap tuntutan atau cabaran","Semata-mata rasa lapar","Keadaan tidur sahaja","Aktiviti bersukan"],a:0,e:"Stres boleh berlaku apabila seseorang menghadapi tuntutan atau cabaran tertentu."},
+{t:"Pendidikan Kesihatan",q:"Apakah cara yang sihat untuk menguruskan stres?",o:["Melakukan aktiviti fizikal dan berehat secukupnya","Memendam perasaan","Merokok","Tidak tidur"],a:0,e:"Aktiviti fizikal, rehat dan bercakap dengan orang dipercayai boleh membantu menguruskan stres."},
+{t:"Pendidikan Kesihatan",q:"Apakah tindakan yang sesuai jika seseorang membuli kita?",o:["Membalas dengan keganasan","Berdiam diri selama-lamanya","Beritahu guru atau orang dewasa yang dipercayai","Ajak rakan membalas"],a:2,e:"Laporkan buli kepada guru atau orang dewasa yang dipercayai dan utamakan keselamatan."},
+{t:"Pendidikan Kesihatan",q:"Apakah contoh sentuhan yang tidak selamat?",o:["Sentuhan yang membuat seseorang berasa takut, tidak selesa atau terancam","Bersalaman dengan izin","Bersalaman ketika bersukan","Bersalaman dengan guru"],a:0,e:"Sentuhan yang membuat seseorang berasa tidak selamat atau tidak selesa perlu dielakkan dan dilaporkan."},
+{t:"Pendidikan Kesihatan",q:"Jika seseorang meminta kita merahsiakan perkara yang membuat kita tidak selesa, apakah tindakan terbaik?",o:["Simpan rahsia","Beritahu orang dewasa yang dipercayai","Ikut sahaja","Hantar kepada semua rakan"],a:1,e:"Perkara yang membuat kita tidak selesa perlu dikongsikan dengan orang dewasa yang dipercayai."},
+{t:"Pendidikan Kesihatan",q:"Apakah tujuan mendapatkan tidur yang mencukupi?",o:["Membantu badan dan minda berehat serta pulih","Menyebabkan kurang fokus","Menggantikan aktiviti fizikal","Mengurangkan keperluan makanan"],a:0,e:"Tidur yang cukup menyokong pemulihan badan, tumpuan dan kesejahteraan."},
+{t:"Pendidikan Kesihatan",q:"Antara berikut, yang manakah tabiat tidur yang baik?",o:["Menggunakan peranti sehingga lewat malam setiap hari","Mempunyai waktu tidur yang teratur","Minum minuman berkafein sebelum tidur","Tidur pada waktu yang berubah-ubah setiap hari"],a:1,e:"Jadual tidur yang teratur membantu mendapatkan rehat yang berkualiti."},
+{t:"Pendidikan Kesihatan",q:"Apakah yang dimaksudkan dengan dehidrasi?",o:["Kekurangan air dalam badan","Lebihan tenaga","Kekurangan tidur sahaja","Kekurangan aktiviti fizikal"],a:0,e:"Dehidrasi berlaku apabila badan kehilangan lebih banyak cecair daripada yang diterima."},
+{t:"Pendidikan Kesihatan",q:"Apakah pilihan minuman yang lebih baik untuk menghilangkan dahaga?",o:["Air kosong","Minuman bergas setiap masa","Minuman tenaga setiap masa","Sirap pekat"],a:0,e:"Air kosong ialah pilihan yang baik untuk membantu memenuhi keperluan cecair badan."},
+{t:"Pendidikan Kesihatan",q:"Apakah tujuan membaca label makanan?",o:["Mengetahui maklumat seperti kandungan nutrien dan gula","Memilih bungkusan paling cantik","Menentukan warna makanan","Mengelakkan semua jenis makanan"],a:0,e:"Label makanan membantu kita membuat pilihan makanan yang lebih bijak."},
+{t:"Pendidikan Kesihatan",q:"Apakah tindakan yang selamat ketika melintas jalan?",o:["Berlari melintas sesuka hati","Menggunakan lintasan yang sesuai dan melihat keadaan trafik","Menggunakan telefon sambil melintas","Mengikut rakan tanpa melihat jalan"],a:1,e:"Gunakan tempat melintas yang sesuai dan pastikan keadaan trafik selamat sebelum melintas."},
+{t:"Pendidikan Kesihatan",q:"Apakah tindakan yang betul apabila berlaku kemalangan kecil di sekolah?",o:["Bersembunyi","Maklumkan kepada guru dan dapatkan bantuan","Ketawa dan terus bermain","Meninggalkan tempat kejadian tanpa memberitahu sesiapa"],a:1,e:"Guru perlu dimaklumkan supaya bantuan yang sesuai dapat diberikan."},
+{t:"Pendidikan Kesihatan",q:"Apakah maksud gaya hidup aktif?",o:["Kerap melakukan aktiviti fizikal dan mengurangkan masa tidak aktif","Duduk sepanjang hari","Tidur sepanjang masa lapang","Tidak melakukan sebarang aktiviti"],a:0,e:"Gaya hidup aktif melibatkan pergerakan dan aktiviti fizikal secara berkala."},
+{t:"Pendidikan Kesihatan",q:"Jika rakan mengajak melakukan aktiviti yang berbahaya, apakah pilihan terbaik?",o:["Ikut sahaja","Cabarkan rakan","Tolak dan beritahu orang dewasa jika perlu","Rakam untuk disebarkan"],a:2,e:"Keselamatan perlu diutamakan. Tolak aktiviti berbahaya dan dapatkan bantuan jika perlu."}
+];
+
+let current=0,score=0,answered=false,results=[];
+const $=id=>document.getElementById(id);
+function render(){
+  answered=false;
+  $("counter").textContent=`Soalan ${current+1} / ${questions.length}`;
+  $("score").textContent=`Skor: ${score}`;
+  $("bar").style.width=`${((current+1)/questions.length)*100}%`;
+  $("topic").textContent=questions[current].t;
+  $("question").textContent=questions[current].q;
+  $("feedback").textContent="";
+  $("next").classList.add("hidden");
+  const box=$("options"); box.innerHTML="";
+  questions[current].o.forEach((opt,i)=>{
+    const b=document.createElement("button");
+    b.className="option"; b.type="button"; b.textContent=String.fromCharCode(65+i)+". "+opt;
+    b.addEventListener("click",()=>answer(i,b)); box.appendChild(b);
+  });
+}
+function answer(choice,button){
+  if(answered)return; answered=true;
+  const q=questions[current], buttons=[...$("options").children];
+  buttons.forEach((b,i)=>{b.disabled=true;if(i===q.a)b.classList.add("correct")});
+  if(choice===q.a){score+=10;button.classList.add("correct");$("feedback").textContent="✅ Betul! "+q.e}
+  else{button.classList.add("wrong");$("feedback").textContent="❌ Kurang tepat. "+q.e}
+  $("score").textContent=`Skor: ${score}`;
+  results.push({q:q.q,correct:choice===q.a,chosen:q.o[choice],answer:q.o[q.a]});
+  $("next").classList.remove("hidden");
+}
+$("next").addEventListener("click",()=>{current++;if(current<questions.length)render();else finish()});
+function finish(){
+  $("game").classList.add("hidden"); $("result").classList.remove("hidden");
+  let msg=score>=270?"🏆 Cemerlang! Anda benar-benar Juara Sihat!":score>=210?"🌟 Sangat baik! Teruskan usaha!":score>=150?"👍 Bagus! Tingkatkan lagi pengetahuan anda!":"💪 Jangan putus asa! Cuba semula dan tingkatkan skor!";
+  let review=results.map((r,i)=>`<div class="review-item"><b>${i+1}. ${r.q}</b><br>${r.correct?"✅ Betul":"❌ Jawapan anda: "+r.chosen+"<br>✔ Jawapan: "+r.answer}</div>`).join("");
+  $("result").innerHTML=`<div class="big">🎉</div><h2>Permainan Tamat!</h2><p style="font-size:22px"><b>${score} / 300</b></p><p>${msg}</p><button class="action" id="restart">🔄 Main Semula</button><div class="review"><h3>Semakan Jawapan</h3>${review}</div>`;
+  $("restart").addEventListener("click",()=>{current=0;score=0;results=[];$("result").classList.add("hidden");$("game").classList.remove("hidden");render();window.scrollTo({top:0,behavior:"smooth"})});
+}
+render();
+</script>
+</body>
+</html>
